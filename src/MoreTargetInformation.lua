@@ -7,7 +7,7 @@
 ----------------------------------------------------------------------------------------------------------------------------------------
 local AddonInfo = {
   addon = "MoreTargetInformation",
-  version = "42.0",
+  version = "{addon.version}",
   author = "Lord Richter",
   savename = "MoreTargetInformation"
 }
@@ -439,7 +439,7 @@ local function getGuildMembership()
 end   
 
 -- ----------------------------------------------------------------------------------------------------------------------
-local function IsUnitGuild(player)
+function IsUnitGuild(player)
   local guild = nil
   local maxrank = 0
   local inguild = player and MTI and MTI.guild and MTI.guild.member and MTI.guild.member[player]

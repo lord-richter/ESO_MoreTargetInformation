@@ -1,0 +1,11 @@
+<GuiXml>
+    <Controls>
+        <TopLevelControl name="MoreTargetInformation">
+            <Dimensions x="10" y="10" />
+            <Anchor point="LEFT" />
+            <OnUpdate>
+                MTIUpdate()
+            </OnUpdate>            
+        </TopLevelControl>
+    </Controls>
+</GuiXml>
