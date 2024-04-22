@@ -1,10 +1,10 @@
 # ESO_MoreTargetInformation
 ##More Target Information, an Elder Scrolls Online addon
 
-###Install from:
+### Install from:
 https://www.esoui.com/downloads/info1189-MoreTargetInformation.html
 
-###Description
+### Description
 This is just a simple addon that changes the target text under the target heath bar to show information about the player and character that are different from what the base game displays.
 
 With nameplates, ZOS has decided on color schemes for NPCs and players. I am changing the color scheme of the target frame to better match the nameplates.
