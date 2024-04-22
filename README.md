@@ -1,5 +1,5 @@
 # ESO_MoreTargetInformation
-##More Target Information, an Elder Scrolls Online addon
+## More Target Information, an Elder Scrolls Online addon
 
 ### Install from:
 https://www.esoui.com/downloads/info1189-MoreTargetInformation.html
