@@ -354,34 +354,6 @@ end
 
 
 -- ----------------------------------------------------------------------------------------------------------------------
--- Guild Event Handlers
--- ----------------------------------------------------------------------------------------------------------------------
-function MTIGuildMemberAddedEvent(eventCode, guildId, displayName)
-  clearGuildTable()
-  getGuildMembership()
-end 
-
--- ----------------------------------------------------------------------------------------------------------------------
-function MTIGuildMemberRemovedEvent(eventCode, guildId, displayName, characterName)
-  clearGuildTable()
-  getGuildMembership()
-end   
-
--- ----------------------------------------------------------------------------------------------------------------------
-function MTIGuildSelfLeftEvent(eventCode, guildId, guildName)
-  clearGuildTable()
-  getGuildMembership()
-end   
-
--- ----------------------------------------------------------------------------------------------------------------------
-function MTIGuildSelfJoinedEvent(eventCode, guildId, guildName)
-  clearGuildTable()
-  getGuildMembership()
-end 
-
-
-
--- ----------------------------------------------------------------------------------------------------------------------
 -- Guild management
 -- ----------------------------------------------------------------------------------------------------------------------
 local function clearGuildTable()
@@ -450,15 +422,34 @@ function IsUnitGuild(player)
   return inguild, guild
 end
 
--- ----------------------------------------------------------------------------------------------------------------------   
+-- ----------------------------------------------------------------------------------------------------------------------
+-- Guild Event Handlers
+-- ----------------------------------------------------------------------------------------------------------------------
+local function MTIGuildMemberAddedEvent(eventCode, guildId, displayName)
+  clearGuildTable()
+  getGuildMembership()
+end 
 
-local function getNamesWithClassRace(unitTag)
-  local usename = tonumber(GetSetting(SETTING_TYPE_UI, IsInGamepadPreferredMode() and UI_SETTING_PRIMARY_PLAYER_NAME_GAMEPAD or UI_SETTING_PRIMARY_PLAYER_NAME_KEYBOARD)) == PRIMARY_PLAYER_NAME_SETTING_PREFER_CHARACTER
-  local character = GetUnitName(unitTag)
-  local userid = GetUnitDisplayName(unitTag)
+-- ----------------------------------------------------------------------------------------------------------------------
+local function MTIGuildMemberRemovedEvent(eventCode, guildId, displayName, characterName)
+  clearGuildTable()
+  getGuildMembership()
+end   
 
-end
+-- ----------------------------------------------------------------------------------------------------------------------
+local function MTIGuildSelfLeftEvent(eventCode, guildId, guildName)
+  clearGuildTable()
+  getGuildMembership()
+end   
 
+-- ----------------------------------------------------------------------------------------------------------------------
+local function MTIGuildSelfJoinedEvent(eventCode, guildId, guildName)
+  clearGuildTable()
+  getGuildMembership()
+end 
+
+-- ----------------------------------------------------------------------------------------------------------------------
+-- Initialize addon
 -- ----------------------------------------------------------------------------------------------------------------------
 local function LoadAddon(eventCode, addOnName)
 
