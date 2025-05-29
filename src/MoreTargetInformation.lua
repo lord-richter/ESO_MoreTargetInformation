@@ -9,7 +9,7 @@ local AddonInfo = {
   addon = "MoreTargetInformation",
   version = "{addon.version}",
   author = "Lord Richter",
-  savename = "MoreTargetInformation"
+  savename = "MoreTargetInformationVars"
 }
 
 ----------------------------------------------------------------------------------------------------------------------------------------
@@ -23,7 +23,6 @@ local MTI = {
   },
   updated = 0,
   debugstring = "",
-  announceguard = false,
   color = {
     white={r=1,g=1,b=1},
     darkcyan={r=0,g=0.8,b=0.8},
@@ -45,7 +44,12 @@ local MTI = {
   },
   zo_nameplate = {},
   zo_caption = {},
-  guild = {}  
+  guild = {},
+  messages = {},
+  settings = {
+    announceguard=false
+  },
+  savedvariables = {}  
 }
 
 local Encounter = {
@@ -69,7 +73,8 @@ local gender = { "Female" , "Male" }
 
 -- localize calls to ESO API
 local GetAllianceName = GetAllianceName 
-local GetAllianceSymbolIcon = GetAllianceSymbolIcon
+local GetAllianceSymbolIcon = ZO_GetAllianceSymbolIcon
+local ZO_GetAllianceSymbolIcon = ZO_GetAllianceSymbolIcon
 local GetAvARankName = GetAvARankName
 local GetGuildId = GetGuildId
 local GetGuildMemberCharacterInfo = GetGuildMemberCharacterInfo
@@ -77,7 +82,8 @@ local GetGuildMemberInfo = GetGuildMemberInfo
 local GetGuildName = GetGuildName
 local GetMapName = GetMapName
 local GetNumGuildMembers = GetNumGuildMembers
-local GetPlatformClassIcon = GetPlatformClassIcon
+local GetPlatformClassIcon = ZO_GetPlatformClassIcon
+local ZO_GetPlatformClassIcon  = ZO_GetPlatformClassIcon
 local GetSetting = GetSetting
 local GetUniqueNameForCharacter = GetUniqueNameForCharacter
 local GetUnitAlliance = GetUnitAlliance
@@ -106,6 +112,7 @@ local IsUnitJusticeGuard = IsUnitJusticeGuard
 local ZO_GetPrimaryPlayerName = ZO_GetPrimaryPlayerName
 local zo_iconFormat = zo_iconFormat
 local zo_strformat = zo_strformat
+local CHAT_ROUTER = CHAT_ROUTER
 
 -- define icons
 local ICON_SIZE = 24
@@ -147,6 +154,12 @@ local function initializeTable(template)
   return t2 
 end
 
+local function DisplayMessage(text)
+  if text and text~="" and CHAT_ROUTER then
+    CHAT_ROUTER:AddDebugMessage(text)
+  end 
+end
+
 -- ----------------------------------------------------------------------------------------------------------------------
 -- Override ZOS function with ours
 -- ----------------------------------------------------------------------------------------------------------------------
@@ -182,7 +195,7 @@ function MTIUpdate()
       end
     end
 
-    if Encounter.guard and MTI.announceguard and GetFullBountyPayoffAmount()>0 and guardnotification then
+    if Encounter.guard and MTI.savedvariables.announceguard and GetFullBountyPayoffAmount()>0 and guardnotification then
       guardnotification = false
       PlaySound( GUARD_ANNOUNCE_SOUND )
     end
@@ -242,9 +255,10 @@ function MTIOnTargetChange(eventCode)
 
     -- collect remaining information about target
     local classname = GetUnitClass(unitTag)
-    local classicon = GetPlatformClassIcon(GetUnitClassId(unitTag)) 
+    
+    local classicon = ZO_GetPlatformClassIcon(GetUnitClassId(unitTag)) 
     local racename = GetUnitRace(unitTag)
-    local raceicon = RACE_ICONS[(GetUnitRaceId(unitTag))]
+    -- local raceicon = RACE_ICONS[(GetUnitRaceId(unitTag))]
     local raceclass = GetUnitRace(unitTag) .. " " .. zo_iconFormat(classicon,ICON_SIZE,ICON_SIZE) .. " " .. GetUnitClass(unitTag)
 
     local avarank = GetUnitAvARank(unitTag)
@@ -255,7 +269,7 @@ function MTIOnTargetChange(eventCode)
 
     if alliance>0 then
       alliancename = alliancename ..GetAllianceName(alliance) .. " "
-      local allianceiconname = GetAllianceSymbolIcon(alliance)
+      local allianceiconname = ZO_GetAllianceSymbolIcon(alliance)
       allianceicon = zo_iconFormat(allianceiconname,ICON_SIZE,ICON_SIZE)
     end
 
@@ -423,6 +437,21 @@ function IsUnitGuild(player)
 end
 
 -- ----------------------------------------------------------------------------------------------------------------------
+-- SLASH COMMAND: guardalert
+-- ----------------------------------------------------------------------------------------------------------------------
+local function ToggleGuardAlert()
+
+  if MTI.savedvariables.announceguard then
+    MTI.savedvariables.announceguard = false
+    DisplayMessage("Guard alert sound OFF")
+  else
+    MTI.savedvariables.announceguard = true
+    DisplayMessage("Guard alert sound ON")
+  end
+  
+end
+
+-- ----------------------------------------------------------------------------------------------------------------------
 -- Guild Event Handlers
 -- ----------------------------------------------------------------------------------------------------------------------
 local function MTIGuildMemberAddedEvent(eventCode, guildId, displayName)
@@ -454,6 +483,9 @@ end
 local function LoadAddon(eventCode, addOnName)
 
   if(addOnName == AddonInfo.addon) then
+  
+    MTI.savedvariables = ZO_SavedVars:NewCharacterIdSettings(AddonInfo.savename,1,nil,MTI.settings)
+    
     getGuildMembership()
     MTI.ignoreicon=""
     if zo_iconFormat(IGNORE_ICON_TEXTURE,ICON_SIZE,ICON_SIZE) then
@@ -494,6 +526,8 @@ local function LoadAddon(eventCode, addOnName)
     EVENT_MANAGER:RegisterForEvent(AddonInfo.addon, EVENT_GUILD_SELF_LEFT_GUILD, MTIGuildSelfLeftEvent) 
     EVENT_MANAGER:RegisterForEvent(AddonInfo.addon, EVENT_RETICLE_TARGET_CHANGED, MTIOnTargetChange)
     EVENT_MANAGER:UnregisterForEvent(AddonInfo.addon, EVENT_ADD_ON_LOADED)
+    
+    SLASH_COMMANDS["/guardalert"] = ToggleGuardAlert
   end
 
 end
