@@ -1,0 +1,13 @@
+## Title: |c0099ffMore Target Information|cffffff v{addon.version}|r
+## Author: |c999999{addon.blame}
+## Version: {addon.version}
+## Description: Displays more information about the characters around you.
+## SavedVariables: MoreTargetInformationVars
+## APIVersion: {addon.apiversion}
+
+{zenimax.boilerplate}
+
+# {addon.name} v{addon.version} {addon.date}
+
+MoreTargetInformation.lua
+MoreTargetInformation.xml
