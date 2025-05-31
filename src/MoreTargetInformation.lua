@@ -72,6 +72,9 @@ local Encounter = {
 local gender = { "Female" , "Male" }
 
 -- localize calls to ESO API
+local UNIT_TYPE_PLAYER = 1
+local UNIT_TYPE_MONSTER = 2
+local UNIT_TYPE_OTHER = 11
 local GetAllianceName = GetAllianceName 
 local GetAllianceSymbolIcon = ZO_GetAllianceSymbolIcon
 local ZO_GetAllianceSymbolIcon = ZO_GetAllianceSymbolIcon
@@ -136,7 +139,7 @@ local RACE_REDGUARD_ICON =  "/esoui/art/charactercreate/charactercreate_redguard
 local RACE_ICONS = { RACE_BRETON_ICON, RACE_REDGUARD_ICON, RACE_ORC_ICON, RACE_DUNMER_ICON, RACE_NORD_ICON, RACE_ARGONIAN_ICON, RACE_ALTMER_ICON, RACE_BOSMER_ICON, RACE_KHAJIIT_ICON, RACE_IMPERIAL_ICON }
 
 -- ESO 2.4 top line:  (CHAMPIONICON) (LEVEL) (NAME) (RANKICON)
---	  bottom line:  (CAPTION)
+--    bottom line:  (CAPTION)
 
 -- debug
 local GUARD_ANNOUNCE_SOUND = SOUNDS.JUSTICE_STATE_CHANGED
@@ -185,7 +188,7 @@ function MTIUpdate()
       ZO_TargetUnitFramereticleoverCaption:SetHidden(false)
       ZO_TargetUnitFramereticleoverCaption:SetColor(Encounter.color.captioncolor["r"],Encounter.color.captioncolor["g"],Encounter.color.captioncolor["b"],1)
       ZO_TargetUnitFramereticleoverCaption:SetText(MTI.target.bottomline)
-    elseif (Encounter.type==UNIT_TYPE_MONSTER) then 
+    elseif (Encounter.type>=UNIT_TYPE_MONSTER) then 
       ZO_TargetUnitFramereticleoverName:SetColor(Encounter.color.namecolor["r"],Encounter.color.namecolor["g"],Encounter.color.namecolor["b"],1)
       ZO_TargetUnitFramereticleoverName:SetText(MTI.target.topline)
       if (string.len(MTI.target.bottomline)>0) then
@@ -227,7 +230,7 @@ function MTIOnTargetChange(eventCode)
   Encounter.reaction = GetUnitReaction(unitTag);
   Encounter.type = type
 
-  -- NPCs are type 2, Players are type 1
+  -- NPCs are type 2+, Players are type 1
   if type == UNIT_TYPE_PLAYER then
     Encounter.color.namecolor = MTI.color.white
 
@@ -322,7 +325,7 @@ function MTIOnTargetChange(eventCode)
         MTI.target.bottomline = zo_strformat("(<<1>>) <<2>> <<3>>",Encounter.name.secondary,raceclass,Encounter.guildname)
       end
     end
-  elseif type == UNIT_TYPE_MONSTER then
+  elseif type >= UNIT_TYPE_MONSTER then
     Encounter.color.namecolor = MTI.color.white
     -- just the name for now     
     MTI.target.topline = name
@@ -417,7 +420,7 @@ local function getGuildMembership()
           if MTI.guild.member[player].firstguild.size<members then
             MTI.guild.member[player].firstguild.name = guildname
             MTI.guild.member[player].firstguild.size = members
-          end			
+          end     
         end
       end
     end
@@ -492,30 +495,30 @@ local function LoadAddon(eventCode, addOnName)
       MTI.ignoreicon = zo_iconFormat(IGNORE_ICON_TEXTURE,ICON_SIZE,ICON_SIZE)
     end
 
-    MTI.friendicon=""	
+    MTI.friendicon="" 
     if zo_iconFormat(FRIEND_ICON_TEXTURE,ICON_SIZE,ICON_SIZE) then
       MTI.friendicon = zo_iconFormat(FRIEND_ICON_TEXTURE,ICON_SIZE,ICON_SIZE)
     end
 
-    MTI.guildicon=""	
+    MTI.guildicon=""  
     if zo_iconFormat(GUILD_ICON_TEXTURE,ICON_SIZE,ICON_SIZE) then
       MTI.guildicon = zo_iconFormat(GUILD_ICON_TEXTURE,ICON_SIZE,ICON_SIZE)
-    end		
+    end   
 
-    MTI.playericon=""	
+    MTI.playericon="" 
     if zo_iconFormat(CHARACTER_NAME_ICON,ICON_SIZE,ICON_SIZE) then
       MTI.playericon = zo_iconFormat(CHARACTER_NAME_ICON,ICON_SIZE,ICON_SIZE)
-    end		
+    end   
 
-    MTI.groupleadericon=""	
+    MTI.groupleadericon=""  
     if zo_iconFormat(GROUP_LEADER_ICON,ICON_SIZE,ICON_SIZE) then
       MTI.groupleadericon = zo_iconFormat(GROUP_LEADER_ICON,ICON_SIZE,ICON_SIZE)
-    end		
+    end   
 
-    MTI.groupmembericon=""	
+    MTI.groupmembericon=""  
     if zo_iconFormat(GROUP_MEMBER_ICON,ICON_SIZE,ICON_SIZE) then
       MTI.groupmembericon = zo_iconFormat(GROUP_MEMBER_ICON,ICON_SIZE,ICON_SIZE)
-    end	
+    end 
 
     if (LibNorthCastle) then LibNorthCastle:Register(AddonInfo.addon,AddonInfo.version) end
 
