@@ -44,10 +44,16 @@ local MTI = {
   },
   zo_nameplate = {},
   zo_caption = {},
-  guild = {},
+  guild = {
+    scanguild=1,
+    member = {}
+  },
   messages = {},
   settings = {
-    announceguard=false
+    announceguard=false,
+    guildscan=15000,
+    guildmax=5,
+    guildmin=1
   },
   savedvariables = {}  
 }
@@ -388,43 +394,62 @@ end
 -- ----------------------------------------------------------------------------------------------------------------------
 local function getGuildMembership()
 
-  local guildnum = 0
+  local guildnum = MTI.guild.scanguild
 
-  MTI.guild = {}
-  MTI.guild.member = {}
+  local id = GetGuildId(guildnum)
 
-  for guildnum = 1,5,1 do
-    local id = GetGuildId(guildnum)
+  if id then 
+    local members = GetNumGuildMembers(id)
+    local guildname = GetGuildName(id)
 
-    if id then 
-      local members = GetNumGuildMembers(id)
-      local guildname = GetGuildName(id)
+    -- update character history based on the member information
+    local member = 0
 
-      -- update character history based on the member information
-      local member = 0
+    for member = 1,members,1 do
+      local player, note, rank, status, activelast = GetGuildMemberInfo(id,member)
+      local hasCharacter, characterName, zoneName, classid, alliance, level, championRank = GetGuildMemberCharacterInfo(id,member)
 
-      for member = 1,members,1 do
-        local player, note, rank, status, activelast = GetGuildMemberInfo(id,member)
-        local hasCharacter, characterName, zoneName, classid, alliance, level, championRank = GetGuildMemberCharacterInfo(id,member)
-
-        if hasCharacter and members>1 then
-          local caret = string.len(characterName) - 3
-          local character = ""
-          if caret>0 then
-            character = string.sub(characterName,1,caret)
-          end
-          -- add player in database
-          MTI.guild.member[player]={}
-          MTI.guild.member[player].character = character
-          MTI.guild.member[player].firstguild = MTI.guild.member[player].firstguild or { size = 0, name = "" }
-          if MTI.guild.member[player].firstguild.size<members then
-            MTI.guild.member[player].firstguild.name = guildname
-            MTI.guild.member[player].firstguild.size = members
-          end     
+      if hasCharacter and members>1 then
+        local caret = string.len(characterName) - 3
+        local character = ""
+        if caret>0 then
+          character = string.sub(characterName,1,caret)
         end
+        -- add player in database
+        MTI.guild.member[player]={}
+        MTI.guild.member[player].character = character
+        MTI.guild.member[player].firstguild = MTI.guild.member[player].firstguild or { size = 0, name = "" }
+        if MTI.guild.member[player].firstguild.size<members then
+          MTI.guild.member[player].firstguild.name = guildname
+          MTI.guild.member[player].firstguild.size = members
+        end     
       end
     end
   end
+  
+  -- next guild scan
+  guildnum = guildnum + 1
+  
+  if guildnum>MTI.settings.guildmax then
+    guildnum = MTI.settings.guildmin
+    MTI.guild.scanguild = guildnum
+  else
+    MTI.guild.scanguild = guildnum
+    zo_callLater(getGuildMembership,MTI.settings.guildscan)  
+  end
+  
+  
+end
+
+-- ----------------------------------------------------------------------------------------------------------------------
+local function startGuildQueries()
+
+  MTI.guild = {}
+  MTI.guild.scanguild = MTI.settings.guildmin
+  MTI.guild.member = {}
+
+  zo_callLater(getGuildMembership,MTI.settings.guildscan)
+  
 end   
 
 -- ----------------------------------------------------------------------------------------------------------------------
@@ -459,25 +484,25 @@ end
 -- ----------------------------------------------------------------------------------------------------------------------
 local function MTIGuildMemberAddedEvent(eventCode, guildId, displayName)
   clearGuildTable()
-  getGuildMembership()
+  startGuildQueries()
 end 
 
 -- ----------------------------------------------------------------------------------------------------------------------
 local function MTIGuildMemberRemovedEvent(eventCode, guildId, displayName, characterName)
   clearGuildTable()
-  getGuildMembership()
+  startGuildQueries()
 end   
 
 -- ----------------------------------------------------------------------------------------------------------------------
 local function MTIGuildSelfLeftEvent(eventCode, guildId, guildName)
   clearGuildTable()
-  getGuildMembership()
+  startGuildQueries()
 end   
 
 -- ----------------------------------------------------------------------------------------------------------------------
 local function MTIGuildSelfJoinedEvent(eventCode, guildId, guildName)
   clearGuildTable()
-  getGuildMembership()
+  startGuildQueries()
 end 
 
 -- ----------------------------------------------------------------------------------------------------------------------
@@ -489,7 +514,8 @@ local function LoadAddon(eventCode, addOnName)
   
     MTI.savedvariables = ZO_SavedVars:NewCharacterIdSettings(AddonInfo.savename,1,nil,MTI.settings)
     
-    getGuildMembership()
+    startGuildQueries()
+    
     MTI.ignoreicon=""
     if zo_iconFormat(IGNORE_ICON_TEXTURE,ICON_SIZE,ICON_SIZE) then
       MTI.ignoreicon = zo_iconFormat(IGNORE_ICON_TEXTURE,ICON_SIZE,ICON_SIZE)
