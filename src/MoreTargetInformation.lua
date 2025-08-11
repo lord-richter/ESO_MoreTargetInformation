@@ -181,7 +181,7 @@ end
 -- UI Refresh
 -- Very brief since it is called so often
 -- ----------------------------------------------------------------------------------------------------------------------
-function MTIUpdate()
+function MoreTargetInformation_Update()
   -- only do this if there has been an update since the last time we were here
   if MTI.updated == 1 then
     MTI.updated = 0
@@ -216,7 +216,7 @@ end
 -- Target Change event handler
 -- this fires when the target changes, then sets everything up for the next UI update
 -- ----------------------------------------------------------------------------------------------------------------------   
-function MTIOnTargetChange(eventCode)
+local function MTIOnTargetChange(eventCode)
   local unitTag = "reticleover"
   local type = GetUnitType(unitTag)
   local name = GetUnitName(unitTag)
@@ -453,7 +453,7 @@ local function startGuildQueries()
 end   
 
 -- ----------------------------------------------------------------------------------------------------------------------
-function IsUnitGuild(player)
+local function IsUnitGuild(player)
   local guild = nil
   local maxrank = 0
   local inguild = player and MTI and MTI.guild and MTI.guild.member and MTI.guild.member[player]
