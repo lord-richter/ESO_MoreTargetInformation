@@ -212,170 +212,6 @@ function MoreTargetInformation_Update()
 end
 
 
--- ----------------------------------------------------------------------------------------------------------------------   
--- Target Change event handler
--- this fires when the target changes, then sets everything up for the next UI update
--- ----------------------------------------------------------------------------------------------------------------------   
-local function MTIOnTargetChange(eventCode)
-  local unitTag = "reticleover"
-  local type = GetUnitType(unitTag)
-  local name = GetUnitName(unitTag)
-  local player = GetUnitDisplayName(unitTag)
-
-  MTI.prefernamesetting = tonumber(GetSetting(SETTING_TYPE_UI,((not IsInGamepadPreferredMode()) and UI_SETTING_PRIMARY_PLAYER_NAME_KEYBOARD) or UI_SETTING_PRIMARY_PLAYER_NAME_GAMEPAD)) == PRIMARY_PLAYER_NAME_SETTING_PREFER_CHARACTER
-  Encounter.color.captioncolor = MTI.color.white
-
-  -- catch instances where there is no longer anything to look at
-  if name == nil or name == "" then 
-    MTI.target.topline = ""
-    Encounter.type = 0
-    MTI.updated = 1
-    return
-  end
-
-  Encounter.reaction = GetUnitReaction(unitTag);
-  Encounter.type = type
-
-  -- NPCs are type 2+, Players are type 1
-  if type == UNIT_TYPE_PLAYER then
-    Encounter.color.namecolor = MTI.color.white
-
-    -- target gender
-    local genderstr = "Genderless"  
-    local gendernum = GetUnitGender(unitTag)
-    if gendernum>0 and gendernum<3 then
-      genderstr = gender[gendernum]
-    end
-
-    -- target guild affiliation relative to player
-    local inguild, guild = IsUnitGuild(player) 
-
-    -- character level or account champion points
-    Encounter.level = "Level " .. GetUnitLevel(unitTag)
-    local rank = GetUnitChampionPoints(unitTag)
-    Encounter.champrank = rank
-
-    if rank>0 then
-      Encounter.level = Encounter.champrank
-    end
-
-    -- target title 
-    Encounter.title = GetUnitTitle(unitTag)
-
-    -- collect remaining information about target
-    local classname = GetUnitClass(unitTag)
-    
-    local classicon = ZO_GetPlatformClassIcon(GetUnitClassId(unitTag)) 
-    local racename = GetUnitRace(unitTag)
-    -- local raceicon = RACE_ICONS[(GetUnitRaceId(unitTag))]
-    local raceclass = GetUnitRace(unitTag) .. " " .. zo_iconFormat(classicon,ICON_SIZE,ICON_SIZE) .. " " .. GetUnitClass(unitTag)
-
-    local avarank = GetUnitAvARank(unitTag)
-    local avarankname = GetAvARankName(gendernum,avarank)
-    local alliance = GetUnitAlliance(unitTag)
-    local alliancename = ""
-    local allianceicon = ""
-
-    if alliance>0 then
-      alliancename = alliancename ..GetAllianceName(alliance) .. " "
-      local allianceiconname = ZO_GetAllianceSymbolIcon(alliance)
-      allianceicon = zo_iconFormat(allianceiconname,ICON_SIZE,ICON_SIZE)
-    end
-
-
-    Encounter.name.primary = name
-    Encounter.name.secondary = GetUnitDisplayName(unitTag)
-    Encounter.guildname = ""
-
-    -- if ignored, summary information, otherwise more detailed
-    if IsUnitIgnored(unitTag) then
-      Encounter.nameicon = MTI.ignoreicon
-      Encounter.color.namecolor = MTI.color.pink
-      MTI.target.topline = zo_strformat("<<1>><<2>> (<<3>>) ",Encounter.nameicon,Encounter.name.primary,Encounter.name.secondary)
-      MTI.target.bottomline = ""
-    else
-      Encounter.color.namecolor = MTI.color.darkcyan
-      Encounter.color.captioncolor = MTI.color.white
-
-      if inguild then
-        Encounter.nameicon = MTI.guildicon
-        Encounter.guildname = "<"..guild..">"
-        Encounter.color.captioncolor = MTI.color.green
-      end
-
-      if IsUnitFriend(unitTag) then
-        Encounter.color.namecolor = MTI.color.cyan
-        Encounter.nameicon = MTI.friendicon
-      end
-
-      if IsUnitGrouped(unitTag) then
-        Encounter.color.namecolor = MTI.color.babyblue
-        if IsUnitGroupLeader(unitTag) then Encounter.nameicon = MTI.groupleadericon
-        else Encounter.nameicon = MTI.groupmembericon
-        end
-      end
-
-      if MTI.prefernamesetting then
-        if Encounter.title ~= "" then
-          MTI.target.topline = zo_strformat("<<1>><<2>>, <<3>> ",Encounter.nameicon,Encounter.name.primary,Encounter.title)
-        else
-          MTI.target.topline = zo_strformat("<<1>><<2>> ",Encounter.nameicon,Encounter.name.primary)
-        end
-        MTI.target.bottomline = zo_strformat("<<1>> <<2>>",raceclass,Encounter.guildname)
-      else
-        if Encounter.title ~= "" then
-          MTI.target.topline = zo_strformat("<<1>><<2>>, <<3>> ",Encounter.nameicon,Encounter.name.primary,Encounter.title)
-        else
-          MTI.target.topline = zo_strformat("<<1>><<2>> ",Encounter.nameicon,Encounter.name.primary)
-        end
-        MTI.target.bottomline = zo_strformat("(<<1>>) <<2>> <<3>>",Encounter.name.secondary,raceclass,Encounter.guildname)
-      end
-    end
-  elseif type >= UNIT_TYPE_MONSTER then
-    Encounter.color.namecolor = MTI.color.white
-    -- just the name for now     
-    MTI.target.topline = name
-    MTI.target.bottomline = ""
-    Encounter.guard = IsUnitInvulnerableGuard(unitTag) or IsUnitJusticeGuard(unitTag)
-    guardnotification = Encounter.guard
-
-    Encounter.level = "Level " .. GetUnitLevel(unitTag)
-    local rank = GetUnitChampionPoints(unitTag)
-    Encounter.champrank = rank
-
-    if rank>0 then
-      Encounter.level = Encounter.champrank
-    end
-
-    -- shopkeepers and other non-combat units just show name
-    if Encounter.reaction == UNIT_REACTION_NEUTRAL then
-      Encounter.level = ""
-      Encounter.color.namecolor = MTI.color.yellow
-    elseif Encounter.reaction == UNIT_REACTION_HOSTILE then
-      Encounter.level = ""
-      Encounter.color.namecolor = MTI.color.red
-    elseif Encounter.reaction == UNIT_REACTION_DEAD then
-      Encounter.level = ""
-      Encounter.color.namecolor = MTI.color.gray
-      --elseif Encounter.reaction == UNIT_REACTION_COMPANION then
-    elseif Encounter.reaction == 6 then
-      Encounter.nameicon = MTI.friendicon
-      Encounter.color.namecolor = MTI.color.babyblue
-      MTI.target.topline = zo_strformat("<<1>><<2>> ",Encounter.nameicon,name)
-      MTI.target.bottomline = Encounter.level .. " Companion"
-    else
-      Encounter.level = ""
-      Encounter.color.namecolor = MTI.color.green     
-    end
-  else 
-    MTI.target.topline = name
-  end
-  MTI.updated = 1
-end
-
-
-
-
 -- ----------------------------------------------------------------------------------------------------------------------
 -- Guild management
 -- ----------------------------------------------------------------------------------------------------------------------
@@ -478,6 +314,172 @@ local function ToggleGuardAlert()
   end
   
 end
+
+-- ----------------------------------------------------------------------------------------------------------------------
+-- Event Handlers
+-- ----------------------------------------------------------------------------------------------------------------------
+
+-- ----------------------------------------------------------------------------------------------------------------------
+-- Target Change event handler
+-- this fires when the target changes, then sets everything up for the next UI update
+-- ----------------------------------------------------------------------------------------------------------------------
+local function MTIOnTargetChange(eventCode)
+  local unitTag = "reticleover"
+  local type = GetUnitType(unitTag)
+  local name = GetUnitName(unitTag)
+  local player = GetUnitDisplayName(unitTag)
+
+  MTI.prefernamesetting = tonumber(GetSetting(SETTING_TYPE_UI,((not IsInGamepadPreferredMode()) and UI_SETTING_PRIMARY_PLAYER_NAME_KEYBOARD) or UI_SETTING_PRIMARY_PLAYER_NAME_GAMEPAD)) == PRIMARY_PLAYER_NAME_SETTING_PREFER_CHARACTER
+  Encounter.color.captioncolor = MTI.color.white
+
+  -- catch instances where there is no longer anything to look at
+  if name == nil or name == "" then
+    MTI.target.topline = ""
+    Encounter.type = 0
+    MTI.updated = 1
+    return
+  end
+
+  Encounter.reaction = GetUnitReaction(unitTag);
+  Encounter.type = type
+
+  -- NPCs are type 2+, Players are type 1
+  if type == UNIT_TYPE_PLAYER then
+    Encounter.color.namecolor = MTI.color.white
+
+    -- target gender
+    local genderstr = "Genderless"
+    local gendernum = GetUnitGender(unitTag)
+    if gendernum>0 and gendernum<3 then
+      genderstr = gender[gendernum]
+    end
+
+    -- target guild affiliation relative to player
+    local inguild, guild = IsUnitGuild(player)
+
+    -- character level or account champion points
+    Encounter.level = "Level " .. GetUnitLevel(unitTag)
+    local rank = GetUnitChampionPoints(unitTag)
+    Encounter.champrank = rank
+
+    if rank>0 then
+      Encounter.level = Encounter.champrank
+    end
+
+    -- target title
+    Encounter.title = GetUnitTitle(unitTag)
+
+    -- collect remaining information about target
+    local classname = GetUnitClass(unitTag)
+
+    local classicon = ZO_GetPlatformClassIcon(GetUnitClassId(unitTag))
+    local racename = GetUnitRace(unitTag)
+    -- local raceicon = RACE_ICONS[(GetUnitRaceId(unitTag))]
+    local raceclass = GetUnitRace(unitTag) .. " " .. zo_iconFormat(classicon,ICON_SIZE,ICON_SIZE) .. " " .. GetUnitClass(unitTag)
+
+    local avarank = GetUnitAvARank(unitTag)
+    local avarankname = GetAvARankName(gendernum,avarank)
+    local alliance = GetUnitAlliance(unitTag)
+    local alliancename = ""
+    local allianceicon = ""
+
+    if alliance>0 then
+      alliancename = alliancename ..GetAllianceName(alliance) .. " "
+      local allianceiconname = ZO_GetAllianceSymbolIcon(alliance)
+      allianceicon = zo_iconFormat(allianceiconname,ICON_SIZE,ICON_SIZE)
+    end
+
+
+    Encounter.name.primary = name
+    Encounter.name.secondary = GetUnitDisplayName(unitTag)
+    Encounter.guildname = ""
+
+    -- if ignored, summary information, otherwise more detailed
+    if IsUnitIgnored(unitTag) then
+      Encounter.nameicon = MTI.ignoreicon
+      Encounter.color.namecolor = MTI.color.pink
+      MTI.target.topline = zo_strformat("<<1>><<2>> (<<3>>) ",Encounter.nameicon,Encounter.name.primary,Encounter.name.secondary)
+      MTI.target.bottomline = ""
+    else
+      Encounter.color.namecolor = MTI.color.darkcyan
+      Encounter.color.captioncolor = MTI.color.white
+
+      if inguild then
+        Encounter.nameicon = MTI.guildicon
+        Encounter.guildname = "<"..guild..">"
+        Encounter.color.captioncolor = MTI.color.green
+      end
+
+      if IsUnitFriend(unitTag) then
+        Encounter.color.namecolor = MTI.color.cyan
+        Encounter.nameicon = MTI.friendicon
+      end
+
+      if IsUnitGrouped(unitTag) then
+        Encounter.color.namecolor = MTI.color.babyblue
+        if IsUnitGroupLeader(unitTag) then Encounter.nameicon = MTI.groupleadericon
+        else Encounter.nameicon = MTI.groupmembericon
+        end
+      end
+
+      if MTI.prefernamesetting then
+        if Encounter.title ~= "" then
+          MTI.target.topline = zo_strformat("<<1>><<2>>, <<3>> ",Encounter.nameicon,Encounter.name.primary,Encounter.title)
+        else
+          MTI.target.topline = zo_strformat("<<1>><<2>> ",Encounter.nameicon,Encounter.name.primary)
+        end
+        MTI.target.bottomline = zo_strformat("<<1>> <<2>>",raceclass,Encounter.guildname)
+      else
+        if Encounter.title ~= "" then
+          MTI.target.topline = zo_strformat("<<1>><<2>>, <<3>> ",Encounter.nameicon,Encounter.name.primary,Encounter.title)
+        else
+          MTI.target.topline = zo_strformat("<<1>><<2>> ",Encounter.nameicon,Encounter.name.primary)
+        end
+        MTI.target.bottomline = zo_strformat("(<<1>>) <<2>> <<3>>",Encounter.name.secondary,raceclass,Encounter.guildname)
+      end
+    end
+  elseif type >= UNIT_TYPE_MONSTER then
+    Encounter.color.namecolor = MTI.color.white
+    -- just the name for now
+    MTI.target.topline = name
+    MTI.target.bottomline = ""
+    Encounter.guard = IsUnitInvulnerableGuard(unitTag) or IsUnitJusticeGuard(unitTag)
+    guardnotification = Encounter.guard
+
+    Encounter.level = "Level " .. GetUnitLevel(unitTag)
+    local rank = GetUnitChampionPoints(unitTag)
+    Encounter.champrank = rank
+
+    if rank>0 then
+      Encounter.level = Encounter.champrank
+    end
+
+    -- shopkeepers and other non-combat units just show name
+    if Encounter.reaction == UNIT_REACTION_NEUTRAL then
+      Encounter.level = ""
+      Encounter.color.namecolor = MTI.color.yellow
+    elseif Encounter.reaction == UNIT_REACTION_HOSTILE then
+      Encounter.level = ""
+      Encounter.color.namecolor = MTI.color.red
+    elseif Encounter.reaction == UNIT_REACTION_DEAD then
+      Encounter.level = ""
+      Encounter.color.namecolor = MTI.color.gray
+      --elseif Encounter.reaction == UNIT_REACTION_COMPANION then
+    elseif Encounter.reaction == 6 then
+      Encounter.nameicon = MTI.friendicon
+      Encounter.color.namecolor = MTI.color.babyblue
+      MTI.target.topline = zo_strformat("<<1>><<2>> ",Encounter.nameicon,name)
+      MTI.target.bottomline = Encounter.level .. " Companion"
+    else
+      Encounter.level = ""
+      Encounter.color.namecolor = MTI.color.green
+    end
+  else
+    MTI.target.topline = name
+  end
+  MTI.updated = 1
+end
+
 
 -- ----------------------------------------------------------------------------------------------------------------------
 -- Guild Event Handlers
